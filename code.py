@@ -97,6 +97,15 @@ class Breakthrough():
 
     def __CheckIfLockChallengeMet(self):
         SequenceAsString = ""
+        # this means only the last three cards of the sequence are checked
+        # the definition of Lock.CheckIfConditionMet() means the sequence being compared must be the same as, not contain, the challenge
+        # therefore only challenges that are at the end of the sequence can be solved
+        # meaning if a challenge is present somewhere else earlier in the string, it won't be solved
+        # so a single-tool challenge must be identical to the final card in the sequence, a two-tool challenge must be identical to the last
+        # cards in the sequence, and a three-tool challenge must be identical to the last three cards in the sequence
+        
+        # TODO: if the game was going to be adapted for longer challenges, just change 3 below to the max challenge length
+        #                                                                                                     \/
         for Count in range(self.__Sequence.GetNumberOfCards() - 1, max(0, self.__Sequence.GetNumberOfCards() - 3) -1, -1):
             if len(SequenceAsString) > 0:
                 SequenceAsString = ", " + SequenceAsString
@@ -112,8 +121,8 @@ class Breakthrough():
                 if len(Item) == 5:
                     CardNumber = int(Item[4])
                 else:
-                    CardNumber = int(Item[4:6])
-                if Item[0: 3] == "Dif":
+                    CardNumber = int(Item[4:6]) # possible index error?
+                if Item[0: 3] == "Dif": # all card IDs/names are 3 chars long
                     CurrentCard = DifficultyCard(CardNumber)
                     CardCol.AddCard(CurrentCard)
                 else:
@@ -182,6 +191,7 @@ class Breakthrough():
                 Choice = input("(enter 1-5 to specify position of key) or (D)iscard five cards from the deck:> ")
                 print()
                 self.__Discard.AddCard(CurrentCard)
+                # no current reason to pass self.__Sequence and self.__CurrentLock
                 CurrentCard.Process(self.__Deck, self.__Discard, self.__Hand, self.__Sequence, self.__CurrentLock, Choice, CardChoice)
         while self.__Hand.GetNumberOfCards() < 5 and self.__Deck.GetNumberOfCards() > 0:
             if self.__Deck.GetCardDescriptionAt(0) == "Dif":
@@ -249,6 +259,7 @@ class Breakthrough():
                 ToCollection.AddCard(CardToMove)
         return Score
 
+# TODO: maybe child class (protected variables, not private)?
 class Challenge():
     def __init__(self):
         self._Met = False
@@ -266,6 +277,7 @@ class Challenge():
     def SetCondition(self, NewCondition):
         self._Condition = NewCondition
 
+# TODO: maybe child class (protected variables, not private)?
 class Lock():
     def __init__(self):
         self._Challenges = []
@@ -301,6 +313,10 @@ class Lock():
     
     def CheckIfConditionMet(self, Sequence):
         for C in self._Challenges:
+            # this means the sequence being compared must be the same as, not contain, the challenge
+            # TODO: if the game was to be adapted to allow the cards the challenge requires to be present
+            #       earlier in the sequence (but still in the correct order), change the second condition below to:
+            #                     self.__ConvertConditionToString(C.GetCondition()) in Sequence
             if not C.GetMet() and Sequence == self.__ConvertConditionToString(C.GetCondition()):
                 C.SetMet(True)
                 return True
@@ -328,6 +344,7 @@ class Card():
 
     def Process(self, Deck, Discard, Hand, Sequence, CurrentLock, Choice, CardChoice):
         pass
+    # function only implemented for difficulty cards
 
     def GetCardNumber(self): 
         return self._CardNumber
@@ -361,15 +378,17 @@ class ToolCard(Card):
 
 class DifficultyCard(Card):
     def __init__(self, *args):
-        self._CardType = "Dif"   
+        self._CardType = "Dif"
         if len(args) == 0:
             super(DifficultyCard, self).__init__()
         elif len(args) == 1:
             self._CardNumber = args[0]
+        # self._Score isn't defined for difficulty cards loaded from files, but a default value of 0 is presumed during processing
         
     def GetDescription(self):
         return self._CardType
 
+    # TODO: Sequence and CurrentLock aren't used - further implementation will likely be required in the exam
     def Process(self, Deck, Discard, Hand, Sequence, CurrentLock, Choice, CardChoice):
         ChoiceAsInteger = None
         try:
