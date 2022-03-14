@@ -461,6 +461,10 @@ class DifficultyCard(Card):
             pass
         if ChoiceAsInteger is not None:
             if ChoiceAsInteger >= 1 and ChoiceAsInteger <= 5:
+                # this accounts for cards still being labelled 1-5 but the card chosen in the previous step not being in the
+                # player's hand any more - but this isn't actually needed as the hand (with only the remaining 4 cards) is
+                # printed immediately before... so this actually just causes confusion and prevents the program from running
+                # as expected
                 if ChoiceAsInteger >= CardChoice:
                     ChoiceAsInteger -= 1
                 if ChoiceAsInteger > 0:
